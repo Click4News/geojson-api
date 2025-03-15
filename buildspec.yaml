@@ -1,0 +1,22 @@
+version: 0.2
+
+phases:
+  install:
+    commands:
+      - echo "Installing dependencies..."
+      - pip install --upgrade pip
+      - pip install -r requirements.txt
+  build:
+    commands:
+      - echo "Building/Testing application..."
+      # 這邊可以加入單元測試或其他測試指令
+      # 例如: pytest tests/
+  post_build:
+    commands:
+      - echo "Build completed successfully."
+
+artifacts:
+  files:
+    - app.py
+    - requirements.txt
+  discard-paths: yes
