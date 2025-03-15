@@ -17,6 +17,6 @@ phases:
 
 artifacts:
   files:
-    - app.py
+    - main.py
     - requirements.txt
   discard-paths: yes
