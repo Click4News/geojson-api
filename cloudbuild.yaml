@@ -13,7 +13,7 @@ steps:
   - name: 'gcr.io/cloud-builders/docker'
     args: ['push', '${_IMAGE}']
 
-  # 部署到 Cloud Run
+  # 部署到 Cloud Run!
   - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
     args:
       [
