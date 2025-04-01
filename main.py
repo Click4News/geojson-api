@@ -3,6 +3,8 @@ from fastapi import FastAPI, HTTPException
 import motor.motor_asyncio
 import uvicorn
 import logging
+from mangum import Mangum  # 加入 Mangum
+
 logging.basicConfig(level=logging.INFO)
 
 app = FastAPI()
@@ -42,6 +44,9 @@ async def get_geojson():
         return feature_collection
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+# 新增 Lambda handler
+handler = Mangum(app)
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 8080))
