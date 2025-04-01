@@ -23,9 +23,10 @@ async def get_geojson():
         # Convert each document to a GeoJSON Feature
         features = []
         for article in articles:
-            logging.info("hi")
             geo = article.get("geoJson")
             if not geo:
+                logging.info("hi")
+
                 continue  # Skip if no geoJson field is present
             
             feature = {
