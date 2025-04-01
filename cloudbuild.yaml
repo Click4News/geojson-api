@@ -2,7 +2,7 @@ options:
   logging: CLOUD_LOGGING_ONLY
 
 substitutions:
-  _IMAGE: gcr.io/$PROJECT_ID/fastapi-service
+  _IMAGE: "gcr.io/${PROJECT_ID}/fastapi-service"
 
 steps:
   # 建構 Docker 映像檔
