@@ -1,25 +1,28 @@
+options:
+  logging: CLOUD_LOGGING_ONLY
+
+substitutions:
+  _IMAGE: gcr.io/$PROJECT_ID/fastapi-service
+
 steps:
   # 建構 Docker 映像檔
   - name: 'gcr.io/cloud-builders/docker'
-    args: ['build', '-t', '$IMAGE', '.']
+    args: ['build', '-t', '${_IMAGE}', '.']
 
   # 推送映像檔到 Container Registry
   - name: 'gcr.io/cloud-builders/docker'
-    args: ['push', '$IMAGE']
+    args: ['push', '${_IMAGE}']
 
   # 部署到 Cloud Run
   - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
     args:
       [
         'gcloud', 'run', 'deploy', 'fastapi-service',
-        '--image', '$IMAGE',
+        '--image', '${_IMAGE}',
         '--region', 'us-central1',
         '--platform', 'managed',
         '--allow-unauthenticated'
       ]
 
 images:
-  - '$IMAGE'
-
-options:
-  logging: CLOUD_LOGGING_ONLY
+  - '${_IMAGE}'
