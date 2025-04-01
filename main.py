@@ -7,7 +7,7 @@ logging.basicConfig(level=logging.INFO)
 
 app = FastAPI()
 
-# 連接 MongoDB Atlas
+# 連接 MongoDB Atlas 
 client = motor.motor_asyncio.AsyncIOMotorClient(
     "mongodb+srv://vasa2949:sandy@cluster0.j5gm2.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0"
 )
