@@ -1,0 +1,21 @@
+steps:
+  # 建立容器映像檔，並標記為 $IMAGE（後續 Cloud Build 會自動填入）
+  - name: 'gcr.io/cloud-builders/docker'
+    args: ['build', '-t', '$IMAGE', '.']
+
+  # 將映像檔推送到 Container Registry
+  - name: 'gcr.io/cloud-builders/docker'
+    args: ['push', '$IMAGE']
+
+  # 部署到 Cloud Run
+  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+    args:
+      [
+        'gcloud', 'run', 'deploy', 'fastapi-service',
+        '--image', '$IMAGE',
+        '--region', 'us-central1',
+        '--platform', 'managed',
+        '--allow-unauthenticated'
+      ]
+images:
+  - '$IMAGE'
