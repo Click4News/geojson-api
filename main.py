@@ -12,13 +12,13 @@ app = FastAPI()
 client = motor.motor_asyncio.AsyncIOMotorClient(
     "mongodb+srv://vasa2949:sandy@cluster0.j5gm2.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0"
 )
-db = client.newsDB  # 請確認這是正確的資料庫名稱
+db = client.sqsMessagesDB  # 請確認這是正確的資料庫名稱
 
 @app.get("/geojson")
 async def get_geojson():
     try:
         # 從 news 集合中撈取所有文件（假設每筆都是一個完整的 FeatureCollection）
-        articles = await db.news.find({}).to_list(length=1000)
+        articles = await db.raw_messages.find({}).to_list(length=1000)
 
         # 用來收集「所有文件」的 features
         all_features = []
