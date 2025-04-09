@@ -14,9 +14,8 @@ app.add_middleware(
     CORSMiddleware,
     allow_origins=[
         "http://localhost:3000",      # 本機 React/Vue/Angular 等
-        "https://your-frontend.app",   # 你的正式前端網址（Cloud Run 前端）
-        # 或者開發階段直接 "*"
-        # "*"
+        "https://click4news-frontend-app.web.app",   # 你的正式前端網址（Cloud Run 前端）
+
     ],
     allow_credentials=True,
     allow_methods=["*"],   # GET, POST, PUT, DELETE, OPTIONS...
