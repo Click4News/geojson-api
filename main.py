@@ -1,5 +1,6 @@
 # main.py
 from fastapi import FastAPI, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
 import motor.motor_asyncio
 import uvicorn
 import logging
@@ -8,6 +9,17 @@ logging.basicConfig(level=logging.INFO)
 
 app = FastAPI()
 
+# 加這一段 ── CORS 設定
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=[
+        "http://localhost:3000",      # 本機 React/Vue/Angular 等
+        "https://click4news-frontend-app.web.app",   # 你的正式前端網址（Cloud Run 前端）
+    ],
+    allow_credentials=True,
+    allow_methods=["*"],   # GET, POST, PUT, DELETE, OPTIONS...
+    allow_headers=["*"],   # Authorization, Content-Type, ...
+)
 # 連接到 MongoDB Atlas，請確認連線字串正確
 client = motor.motor_asyncio.AsyncIOMotorClient(
     "mongodb+srv://vasa2949:sandy@cluster0.j5gm2.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0"
