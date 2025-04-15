@@ -1,4 +1,3 @@
-# main.py
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 import motor.motor_asyncio
@@ -9,58 +8,59 @@ logging.basicConfig(level=logging.INFO)
 
 app = FastAPI()
 
-# 加這一段 ── CORS 設定
+# Add this section — CORS settings
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
-        "http://localhost:3000",      # 本機 React/Vue/Angular 等
-        "https://click4news-frontend-app.web.app",   # 你的正式前端網址（Cloud Run 前端）
+        "http://localhost:3000",      # Local React/Vue/Angular dev
+        "https://click4news-frontend-app.web.app",   # Your production frontend URL (Cloud Run)
     ],
     allow_credentials=True,
-    allow_methods=["*"],   # GET, POST, PUT, DELETE, OPTIONS...
-    allow_headers=["*"],   # Authorization, Content-Type, ...
+    allow_methods=["*"],   # Allow GET, POST, PUT, DELETE, OPTIONS...
+    allow_headers=["*"],   # Allow Authorization, Content-Type, etc.
 )
-# 連接到 MongoDB Atlas，請確認連線字串正確
+
+# Connect to MongoDB Atlas, make sure the connection string is correct
 client = motor.motor_asyncio.AsyncIOMotorClient(
     "mongodb+srv://vasa2949:sandy@cluster0.j5gm2.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0"
 )
-db = client.sqsMessagesDB  # 請確認這是正確的資料庫名稱
+db = client.sqsMessagesDB1  # Ensure this is the correct database name
 
 @app.get("/geojson")
 async def get_geojson():
     try:
-        # 從 news 集合中撈取所有文件（假設每筆都是一個完整的 FeatureCollection）
+        # Fetch all documents from the raw_messages collection (each assumed to be a complete FeatureCollection)
         articles = await db.raw_messages.find({}).to_list(length=1000)
 
-        # 用來收集「所有文件」的 features
+        # Prepare a list to collect features from all documents
         all_features = []
 
         for article in articles:
-            # 1. 取得該文件的 features
+            # 1. Get the features array from the document
             doc_features = article.get("features", [])
             if not doc_features:
-                logging.info(f"文件 {article.get('_id')} 中沒有 features 或結構不符")
+                logging.info(f"Document {article.get('_id')} has no features or unexpected structure")
                 continue
 
-            # 2. 取得該文件的其他欄位
-            doc_properties = article.get("properties", {})  # 文件本身帶的 properties（若有）
-            doc_title       = article.get("title")
+            # 2. Extract other fields from the document
+            doc_properties = article.get("properties", {})  # Document-level properties (if any)
+            doc_title      = article.get("title")
             doc_published  = article.get("publishedAt")
-            doc_url         = article.get("url")
-            doc_geometry    = article.get("geometry", {})
+            doc_url        = article.get("url")
+            doc_geometry   = article.get("geometry", {})
 
-            # 3. 將「文件層級」的資訊合併到每個 feature
+            # 3. Merge document-level information into each feature
             for feature in doc_features:
-                # 若該 feature 沒有 properties，就先建一個空的
+                # If the feature has no properties, initialize an empty dict
                 if "properties" not in feature:
                     feature["properties"] = {}
 
-                # (a) 合併文件自己的 properties 到 feature 的 properties
-                #     可依照需求決定要不要全部合併，或只挑特定 key
+                # (a) Merge document's properties into the feature's properties
+                #     Adjust as needed to merge all keys or only specific ones
                 for key, value in doc_properties.items():
                     feature["properties"][key] = value
 
-                # (b) 如果想把 doc_title, doc_published, doc_url 等也放進 feature.properties
+                # (b) Optionally add doc_title, doc_published, doc_url to feature.properties
                 if doc_title:
                     feature["properties"]["title"] = doc_title
                 if doc_published:
@@ -68,15 +68,14 @@ async def get_geojson():
                 if doc_url:
                     feature["properties"]["url"] = doc_url
 
-                # (c) 若你想把文件自己的 geometry 也塞到 feature.properties（或其他結構）
-                #     依照你的需求來放；以下只是示範：
+                # (c) If you want to include the document's geometry in feature.properties (or elsewhere)
                 if doc_geometry:
                     feature["properties"]["docGeometry"] = doc_geometry
 
-                # 4. 把處理完的 feature 加入到 all_features
+                # 4. Add the processed feature to all_features
                 all_features.append(feature)
 
-        # 5. 最後回傳一個「合併後」的 FeatureCollection
+        # 5. Return the combined FeatureCollection
         return {
             "type": "FeatureCollection",
             "features": all_features
@@ -87,5 +86,5 @@ async def get_geojson():
 
 
 if __name__ == "__main__":
-    # 啟動伺服器，預設在 http://0.0.0.0:3000
+    # Run the server, default at http://0.0.0.0:3000
     uvicorn.run("main:app", host="0.0.0.0", port=3000, reload=True)
