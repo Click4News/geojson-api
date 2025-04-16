@@ -42,8 +42,8 @@ def get_secret(secret_id: str, version: str = "latest") -> str:
     resp = client.access_secret_version(name=name)
     return resp.payload.data.decode("UTF-8")
 
-# 1. 从 Secret Manager 读出 MongoDB URI
-MONGODB_URI = get_secret("MONGODB_URI")
+# 1. 从 Secret Manager 读出 Mongo URI
+MONGODB_URI = get_secret("MONGO_URI")
 
 # 2. DB 名称用 env 或默认
 DB_NAME = os.getenv("DB_NAME", "sqsMessagesDB1")
