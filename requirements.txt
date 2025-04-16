@@ -2,3 +2,4 @@ fastapi
 uvicorn
 motor
 mangum
+google-cloud-secret-manager
