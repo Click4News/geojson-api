@@ -1,5 +1,3 @@
-# main.py
-
 import os
 import logging
 from fastapi import FastAPI, HTTPException
@@ -30,13 +28,13 @@ def get_secret(secret_id: str, version: str = "latest") -> str:
     从 Secret Manager 拿 secret 值。
     优先用环境变量，否则用 ADC 自动获取 project_id。
     """
-    # 优先读 env
     project_id = os.getenv("GCP_PROJECT") or os.getenv("GOOGLE_CLOUD_PROJECT")
     if not project_id:
-        # fallback：用 ADC（Application Default Credentials）拿 project_id
         _, project_id = google.auth.default()
     if not project_id:
-        raise RuntimeError("无法取得 GCP 项目 ID，请设置 GCP_PROJECT 或 GOOGLE_CLOUD_PROJECT")
+        raise RuntimeError(
+            "无法取得 GCP 项目 ID，请设置 GCP_PROJECT 或 GOOGLE_CLOUD_PROJECT"
+        )
     client = secretmanager.SecretManagerServiceClient()
     name = f"projects/{project_id}/secrets/{secret_id}/versions/{version}"
     resp = client.access_secret_version(name=name)
@@ -44,43 +42,34 @@ def get_secret(secret_id: str, version: str = "latest") -> str:
 
 # 1. 从 Secret Manager 读出 Mongo URI
 MONGODB_URI = get_secret("MONGO_URI")
-
 # 2. DB 名称用 env 或默认
 DB_NAME = os.getenv("DB_NAME", "sqsMessagesDB1")
 
-# 连接 MongoDB
+# 3. 连接 MongoDB
 client = motor.motor_asyncio.AsyncIOMotorClient(MONGODB_URI)
 db = client[DB_NAME]
 
 @app.get("/geojson")
 async def get_geojson():
+    """
+    把 raw_messages 集合里所有文档的 features 平铺合并，
+    返回一个标准的 GeoJSON FeatureCollection。
+    """
     try:
-        articles = await db.raw_messages.find({}).to_list(length=1000)
+        # 拉取所有文档
+        docs = await db.raw_messages.find({}).to_list(length=None)
         all_features = []
-        for art in articles:
-            feats = art.get("features", [])
-            if not feats:
-                logging.info(f"Doc {art.get('_id')} 没有 features")
+        for doc in docs:
+            feats = doc.get("features", [])
+            if not isinstance(feats, list):
+                logging.warning(f"文档 {doc.get('_id')} 的 features 不是列表，已跳过")
                 continue
-
-            props     = art.get("properties", {})
-            title     = art.get("title")
-            published = art.get("publishedAt")
-            url       = art.get("url")
-            geom      = art.get("geometry", {})
-
-            for f in feats:
-                f.setdefault("properties", {})
-                for k, v in props.items():
-                    f["properties"][k] = v
-                if title:     f["properties"]["title"]       = title
-                if published: f["properties"]["publishedAt"] = published
-                if url:       f["properties"]["url"]         = url
-                if geom:      f["properties"]["docGeometry"] = geom
-                all_features.append(f)
+            all_features.extend(feats)
 
         return {"type": "FeatureCollection", "features": all_features}
+
     except Exception as e:
+        logging.error(f"获取 geojson 失败: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 
